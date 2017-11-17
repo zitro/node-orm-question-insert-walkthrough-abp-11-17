@@ -24,16 +24,20 @@ async function resetDB(){
 }; 
 
 describe('Question', () => {
+  beforeEach(async function() {
+    await resetDB()
+
+    await Question.CreateTable()
+  })
+
+  afterEach(async function() {
+    await resetDB()
+  })      
+  
   describe('as a class', () => {
     describe('.CreateTable()', () => {
-      beforeEach(async function() {
-        await resetDB()
-      })
-      afterEach(async function() {
-        await resetDB()
-      })      
 
-      it('exists', async () => {
+      it('is a static class function', async () => {
         expect(Question.CreateTable).to.be.a('function');
       });
       
@@ -64,4 +68,52 @@ describe('Question', () => {
       });
     });
   });
+
+  describe('insert()', function(){
+    it('is a function', async () => {
+      const question = new Question("Where in the world is Carmen Sandiego?")
+      expect(question.insert).to.be.a('function');
+    });
+
+    it("returns a promise", async function(){
+      const question = new Question("Where in the world is Carmen Sandiego?")
+      const questionInsertPromise = question.insert()
+
+      expect(questionInsertPromise).to.be.an.instanceOf(Promise);
+    })
+
+    it("inserts the row into the database", async function(){
+      const question = new Question("Where in the world is Carmen Sandiego?")
+      await question.insert()
+
+      db.get("SELECT * FROM questions WHERE content = 'Where in the world is Carmen Sandiego?'", function(err, result){
+        expect(result.content).to.not.be.undefined
+        expect(result.content).to.eql("Where in the world is Carmen Sandiego?");
+      })
+
+    })
+
+    it("sets the id of the instance based on the primary key", function(done){
+      const question = new Question("Where in the world is Carmen Sandiego?")
+      question.insert()
+
+      db.get("SELECT * FROM questions WHERE content = 'Where in the world is Carmen Sandiego?'", function(err, result){
+        try{
+          expect(result.id).to.not.be.undefined
+          expect(question.id).to.not.be.undefined
+          expect(question.id).to.eql(result.id)
+          done()
+        } catch(err){
+          expect.fail(err, undefined, err.message)
+        }         
+      })      
+    })
+
+    it("returns the instance as the resolution of the promise", async function(){
+      const question = new Question("Where in the world is Carmen Sandiego?")
+      const returnedQuestion = await question.insert()
+
+      expect(returnedQuestion).to.eql(question)
+    })    
+  })
 });
