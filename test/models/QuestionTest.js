@@ -18,10 +18,10 @@ function getTableInfo(tableName){
 async function resetDB(){
   return new Promise(async function(resolve){
     await db.run(`DROP TABLE IF EXISTS questions`, function(){
-      resolve("dropped the questions table")      
+      resolve("dropped the questions table")
     })
   })
-}; 
+};
 
 describe('Question', () => {
   beforeEach(async function() {
@@ -32,15 +32,15 @@ describe('Question', () => {
 
   afterEach(async function() {
     await resetDB()
-  })      
-  
+  })
+
   describe('as a class', () => {
     describe('.CreateTable()', () => {
 
       it('is a static class function', async () => {
         expect(Question.CreateTable).to.be.a('function');
       });
-      
+
       it("returns a promise", async function(){
         const CreateTablePromise = Question.CreateTable()
 
@@ -51,7 +51,7 @@ describe('Question', () => {
         await Question.CreateTable();
 
         const table = await getTableInfo('questions')
-        
+
         expect(table.name).to.eq('questions');
       });
 
@@ -70,27 +70,31 @@ describe('Question', () => {
   });
 
   describe('insert()', function(){
-    it('is a function', async () => {
+    it('is a function',  function(){
       const question = new Question("Where in the world is Carmen Sandiego?")
       expect(question.insert).to.be.a('function');
     });
 
-    it("returns a promise", async function(){
+    it("returns a promise", function(){
       const question = new Question("Where in the world is Carmen Sandiego?")
       const questionInsertPromise = question.insert()
 
       expect(questionInsertPromise).to.be.an.instanceOf(Promise);
     })
 
-    it("inserts the row into the database", async function(){
+    it("inserts the row into the database", function(done){
       const question = new Question("Where in the world is Carmen Sandiego?")
-      await question.insert()
+      question.insert()
 
       db.get("SELECT * FROM questions WHERE content = 'Where in the world is Carmen Sandiego?'", function(err, result){
-        expect(result.content).to.not.be.undefined
-        expect(result.content).to.eql("Where in the world is Carmen Sandiego?");
+        try{
+          expect(result.content).to.not.be.undefined
+          expect(result.content).to.eql("Where in the world is Carmen Sandiego?");
+          done()
+        } catch(err){
+          expect.fail(err, undefined, err.message)
+        }
       })
-
     })
 
     it("sets the id of the instance based on the primary key", function(done){
@@ -105,8 +109,8 @@ describe('Question', () => {
           done()
         } catch(err){
           expect.fail(err, undefined, err.message)
-        }         
-      })      
+        }
+      })
     })
 
     it("returns the instance as the resolution of the promise", async function(){
@@ -114,6 +118,6 @@ describe('Question', () => {
       const returnedQuestion = await question.insert()
 
       expect(returnedQuestion).to.eql(question)
-    })    
+    })
   })
 });
